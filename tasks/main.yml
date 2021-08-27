@@ -88,7 +88,7 @@
   git:
     repo: https://github.com/adrian-griffin/bassline
     dest: "{{ bassline_dir }}"
-    version: "{{ bassline_repo_branch }}"
+    version: main
     accept_hostkey: yes
   notify:
     - restart Bassline service
