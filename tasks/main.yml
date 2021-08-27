@@ -86,7 +86,7 @@
 
 - name: get Bassline repo
   git:
-    repo: "{{ bassline_repo }}"
+    repo: https://github.com/adrian-griffin/bassline
     dest: "{{ bassline_dir }}"
     version: "{{ bassline_repo_branch }}"
     accept_hostkey: yes
