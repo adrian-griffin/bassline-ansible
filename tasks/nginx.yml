@@ -9,7 +9,7 @@
 
 - name: import nginx role
   import_role:
-    name: ansible-role-nginx
+    name: nginx-ansible
   vars:
     nginx_upstreams:
       - name: bassline
