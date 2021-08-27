@@ -1,0 +1,3 @@
+---
+- src: https://github.com/bassline/ansible-role-ustreamer
+- src: https://github.com/bassline/ansible-role-nginx

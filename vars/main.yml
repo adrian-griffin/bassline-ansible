@@ -1,0 +1,13 @@
+---
+# Bassline's quick-install script (which it uses for installation and updates)
+# relies on the bassline user being named "bassline" so changing this value
+# will break updates.
+bassline_user: bassline
+
+# uStreamer variables are placed here, instead of in `defaults/main.yml`,
+# in order to elevate their variable precedence. These variables will now
+# override the default variables in the uStreamer role.
+ustreamer_interface: '127.0.0.1'
+ustreamer_port: 8001
+ustreamer_repo: https://github.com/bassline/ustreamer.git
+ustreamer_repo_version: 'v3.26'

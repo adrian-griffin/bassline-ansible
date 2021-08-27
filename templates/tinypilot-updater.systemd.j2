@@ -1,0 +1,18 @@
+[Unit]
+Description=Bassline updater
+After=syslog.target network.target
+
+[Service]
+Type=oneshot
+User={{ bassline_user }}
+WorkingDirectory={{ bassline_dir }}
+ExecStart={{ bassline_dir }}/venv/bin/python scripts/update-service
+Environment=PYTHONPATH={{ bassline_dir }}/app
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=bassline-update-svc
+TimeoutSec=900
+KillSignal=SIGKILL
+
+[Install]
+WantedBy=local-fs.target

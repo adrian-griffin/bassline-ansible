@@ -1,0 +1,17 @@
+---
+- name: reload Bassline systemd config
+  systemd:
+    name: bassline
+    daemon_reload: yes
+
+- name: restart Bassline service
+  service:
+    name: bassline
+    state: restarted
+
+- name: reload bassline updater systemd config
+  systemd:
+    name: bassline-updater
+    daemon_reload: yes
+    # Never run automatically.
+    enabled: no

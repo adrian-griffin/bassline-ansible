@@ -1,0 +1,18 @@
+---
+bassline_group: bassline
+bassline_dir: /opt/bassline
+bassline_privileged_dir: /opt/bassline-privileged
+bassline_repo: https://github.com/bassline/bassline.git
+bassline_repo_branch: master
+# Port on which Bassline frontend listens (accessible from other hosts on the
+# network).
+bassline_external_port: 80
+bassline_interface: '127.0.0.1'
+# Port on which Bassline's backend listens (accessible only from
+# bassline_interface).
+bassline_port: 8000
+bassline_keyboard_interface: /dev/hidg0
+bassline_mouse_interface: /dev/hidg1
+bassline_enable_debug_logging: no
+bassline_pip_args: ""
+bassline_app_settings_file: "{{ bassline_dir }}/app_settings.cfg"

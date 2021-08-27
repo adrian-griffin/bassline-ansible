@@ -1,0 +1,20 @@
+[Unit]
+Description=Bassline - RPi-based virtual KVM
+After=syslog.target network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User={{ bassline_user }}
+WorkingDirectory={{ bassline_dir }}
+ExecStart={{ bassline_dir }}/venv/bin/python app/main.py
+Environment=HOST={{ bassline_interface }}
+Environment=PORT={{ bassline_port }}
+Environment=APP_SETTINGS_FILE={{ bassline_app_settings_file }}
+{% if bassline_enable_debug_logging %}
+Environment=DEBUG=1
+{% endif %}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

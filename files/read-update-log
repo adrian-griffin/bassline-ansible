@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Reads the bassline-updater systemd log and cuts out the junk content.
+
+# Exit on first error.
+set -e
+
+# Treat undefined environment variables as errors.
+set -u
+
+sudo journalctl -u bassline-updater \
+  | grep bassline-update-svc \
+  | sed -E 's/^.*bassline-update-svc\[[0-9]+\]: //g'

@@ -1,0 +1,162 @@
+---
+- name: install uStreamer
+  import_tasks: ustreamer.yml
+  tags:
+    - ustreamer
+
+- name: install nginx
+  import_tasks: nginx.yml
+
+- name: install HID USB gadget
+  import_tasks: install_usb_gadget.yml
+
+- name: collect Bassline required apt packages on all systems
+  set_fact:
+    bassline_packages:
+      - git
+      - python3-venv
+      - sudo
+
+- name: collect Debian and Ubuntu specific Bassline required apt packages
+  set_fact:
+    bassline_packages: "{{ bassline_packages }} + ['python-pip']"
+  when: ansible_distribution == 'Debian' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version != '20.04')
+
+- name: collect Ubuntu 20.04 specific Bassline required apt packages
+  set_fact:
+    bassline_packages: "{{ bassline_packages }} + ['python3-pip']"
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04'
+
+- name: install Bassline pre-requisite packages
+  apt:
+    name: "{{ bassline_packages }}"
+    state: present
+
+- name: create bassline group
+  group:
+    name: "{{ bassline_group }}"
+    state: present
+
+- name: create bassline user
+  user:
+    name: "{{ bassline_user }}"
+    group: "{{ bassline_group }}"
+    system: yes
+    create_home: yes
+
+- name: copy admin scripts
+  copy:
+    src: "{{ item }}"
+    dest: "{{ bassline_privileged_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - change-hostname
+    - collect-debug-logs
+    - read-update-log
+    - update
+    - update-video-settings
+
+- name: store passwordless sudo paths
+  set_fact:
+    sudo_paths:
+      - /sbin/shutdown
+      - /usr/sbin/service bassline-updater start
+      - "{{ bassline_privileged_dir }}/change-hostname"
+      - "{{ bassline_privileged_dir }}/collect-debug-logs"
+      - "{{ bassline_privileged_dir }}/read-update-log"
+      - "{{ bassline_privileged_dir }}/update"
+      - "{{ bassline_privileged_dir }}/update-video-settings"
+
+- name: enable bassline to execute a whitelist of commands as sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    line: "{{ bassline_user }} ALL=(ALL) NOPASSWD: {{ sudo_paths | join(', ') }}"
+    regexp: "^{{ bassline_user }}"
+    validate: sudo /usr/sbin/visudo -cf %s
+
+- name: create Bassline folder
+  file:
+    path: "{{ bassline_dir }}"
+    state: directory
+    owner: "{{ bassline_user }}"
+    group: "{{ bassline_group }}"
+
+- name: get Bassline repo
+  git:
+    repo: "{{ bassline_repo }}"
+    dest: "{{ bassline_dir }}"
+    version: "{{ bassline_repo_branch }}"
+    accept_hostkey: yes
+  notify:
+    - restart Bassline service
+
+- name: find absolute path to python3
+  shell: realpath $(which python3)
+  register: realpath_python3
+  changed_when: false
+
+- name: save absolute path to python3
+  set_fact:
+    python3_abs_path: "{{ realpath_python3.stdout }}"
+
+- name: create Bassline virtualenv
+  pip:
+    virtualenv: "{{ bassline_dir }}/venv"
+    virtualenv_command: "{{ python3_abs_path }} -m venv venv"
+    requirements: "{{ bassline_dir }}/requirements.txt"
+    extra_args: "{{ bassline_pip_args }}"
+  notify:
+    - restart Bassline service
+
+- name: create Bassline app settings
+  template:
+    src: bassline-app-settings.cfg.j2
+    dest: "{{ bassline_app_settings_file }}"
+    owner: "{{ bassline_user }}"
+    group: "{{ bassline_group }}"
+  notify:
+    - restart Bassline service
+  tags:
+    - app-settings
+
+- name: fix Bassline folder permissions
+  file:
+    path: "{{ bassline_dir }}"
+    state: directory
+    owner: "{{ bassline_user }}"
+    group: "{{ bassline_group }}"
+    recurse: yes
+  # TODO: Figure out why this fails idempotency otherwise.
+  tags:
+    - molecule-idempotence-notest
+
+- name: install Bassline as a service
+  template:
+    src: bassline.systemd.j2
+    dest: /lib/systemd/system/bassline.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload Bassline systemd config
+    - restart Bassline service
+  tags:
+    - systemd-config
+
+- name: enable systemd Bassline service file
+  systemd:
+    name: bassline
+    enabled: yes
+
+- name: install bassline-updater as a service
+  template:
+    src: bassline-updater.systemd.j2
+    dest: /lib/systemd/system/bassline-updater.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload bassline updater systemd config
