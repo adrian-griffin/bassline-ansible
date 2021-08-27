@@ -1,4 +1,4 @@
 ---
 - name: import uStreamer role
   import_role:
-    name: ansible-role-ustreamer
+    name: ustreamer-ansible
